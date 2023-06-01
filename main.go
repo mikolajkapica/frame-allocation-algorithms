@@ -10,14 +10,17 @@ import (
 func main() {
 	const framesQuantity int = 25
 	const processesQuantity int = 5
-	const pagesQuantityBase int = 100
+	const pagesQuantityBase int = 40
 	const pagesQuantityDivergence int = 10
 	const minPageNum int = 1
-	const maxPageNum int = 15
-	const localityMaximumFrequency = 100
+	const maxPageNum int = 30
+	const localityMaximumFrequency = 75
 	const localityMaximumHistoryLength = 20
 	const localityMaximumLength = 15
-	const trashingCheckInterval int = 5
+
+	const trashingCheckInterval int = 10
+	const trashingCheckLast int = 20
+	const trashingMax int = 4
 
 	ram := utils.RAM{
 		Frames:          make([][]utils.Frame, processesQuantity),
@@ -34,22 +37,22 @@ func main() {
 	copy(processes4, processes1)
 
 	fmt.Println("Equal allocation")
-	pageFaults, trashing := frame_allocation_algorithms.EqualAllocation(ram, processes1, trashingCheckInterval)
+	pageFaults, trashing := frame_allocation_algorithms.EqualAllocation(ram, processes1, trashingCheckInterval, trashingCheckLast, trashingMax)
 	fmt.Println("Page faults: ", pageFaults, " Trashing: ", trashing)
 	fmt.Println()
 
 	fmt.Println("Proportional allocation")
-	pageFaults, trashing = frame_allocation_algorithms.ProportionalAllocation(ram, processes2, trashingCheckInterval)
+	pageFaults, trashing = frame_allocation_algorithms.ProportionalAllocation(ram, processes2, trashingCheckInterval, trashingCheckLast, trashingMax)
 	fmt.Println("Page faults: ", pageFaults, " Trashing: ", trashing)
 	fmt.Println()
 
 	fmt.Println("Frequency control allocation")
-	pageFaults, trashing = frame_allocation_algorithms.FrequencyControlAllocation(ram, processes3, trashingCheckInterval, 15, 0.3, 0.5, 0.9)
+	pageFaults, trashing = frame_allocation_algorithms.FrequencyControlAllocation(ram, processes3, trashingCheckInterval, trashingCheckLast, trashingMax, 15, 0.3, 0.5, 0.9)
 	fmt.Println("Page faults: ", pageFaults, " Trashing: ", trashing)
 	fmt.Println()
 
 	fmt.Println("Zone allocation")
-	pageFaults, trashing = frame_allocation_algorithms.ZoneAllocation(ram, processes4, trashingCheckInterval, 15)
+	pageFaults, trashing = frame_allocation_algorithms.ZonalAllocation(ram, processes4, trashingCheckInterval, trashingCheckLast, trashingMax, 15)
 	fmt.Println("Page faults: ", pageFaults, " Trashing: ", trashing)
 	fmt.Println()
 }

@@ -26,6 +26,8 @@ type Process struct {
 	PageFaults          int
 	History             []Page
 	HistoryOfPageFaults []bool
+	TrashedTimes        int
+	IsFrozen            bool
 }
 
 func (process *Process) RemovePage() {
@@ -80,4 +82,28 @@ func DisplayRAM(ram RAM, isPageFault bool, currentProcess Process, currentPage P
 		fmt.Print(" | ")
 	}
 	fmt.Println()
+}
+
+type ProcessesQueue struct {
+	Processes []Process
+}
+
+func (queue *ProcessesQueue) AddProcess(process Process) {
+	queue.Processes = append(queue.Processes, process)
+}
+
+func (queue *ProcessesQueue) RemoveProcess() {
+	queue.Processes = queue.Processes[1:]
+}
+
+func (queue *ProcessesQueue) GetProcess() Process {
+	return queue.Processes[0]
+}
+
+func (queue *ProcessesQueue) IsEmpty() bool {
+	return len(queue.Processes) == 0
+}
+
+func (queue *ProcessesQueue) GetLength() int {
+	return len(queue.Processes)
 }

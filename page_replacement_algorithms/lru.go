@@ -2,7 +2,7 @@ package page_replacement_algorithms
 
 import "frame-allocation-algorithms/utils"
 
-func LRU(ram *utils.RAM, currentPage utils.Page, process *utils.Process, trashingCheckInterval int, trashingCounter *int) bool {
+func LRU(ram *utils.RAM, currentPage utils.Page, process *utils.Process) bool {
 	currentProcessFrames := ram.Frames[process.Id]
 
 	isPageFault := false
@@ -11,9 +11,9 @@ func LRU(ram *utils.RAM, currentPage utils.Page, process *utils.Process, trashin
 		process.PageFaults++
 		if len(currentProcessFrames) > 0 {
 			frameToReplace := NotUsedForLongestTimeInPast(process.History, currentProcessFrames)
-			//if ram.Frames[process.Id][frameToReplace].Page.Id == 0 {
-			//	isNewFrame = true
-			//}
+			if ram.Frames[process.Id][frameToReplace].Page.Id == 0 {
+				isNewFrame = true
+			}
 			ram.Frames[process.Id][frameToReplace] = utils.Frame{Page: currentPage}
 		}
 		if !isNewFrame {
@@ -21,27 +21,7 @@ func LRU(ram *utils.RAM, currentPage utils.Page, process *utils.Process, trashin
 		}
 	}
 
-	process.AddPageToHistory(currentPage)
-	process.RemovePage()
 	process.HistoryOfPageFaults = append(process.HistoryOfPageFaults, isPageFault)
-
-	// trashing
-	if len(process.HistoryOfPageFaults)%trashingCheckInterval == 0 {
-		lastPageFaults := process.HistoryOfPageFaults[len(process.HistoryOfPageFaults)-trashingCheckInterval:]
-		trashingOccured := true
-
-		for i := range lastPageFaults {
-			// if there was no page fault at some point then there is no trashing
-			if !lastPageFaults[i] {
-				trashingOccured = false
-				break
-			}
-		}
-		if trashingOccured {
-			*trashingCounter++
-		}
-	}
-
 	return isPageFault
 }
 

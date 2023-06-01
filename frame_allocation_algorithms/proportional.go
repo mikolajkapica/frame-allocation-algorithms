@@ -6,37 +6,60 @@ import (
 	"math/rand"
 )
 
-func ProportionalAllocation(ram utils.RAM, processes []utils.Process, trashingCheckInterval int) (int, int) {
-	// make frames for each process in ram
+func ProportionalAllocation(ram utils.RAM, processes []utils.Process, trashingCheckInterval, trashingCheckLast, trashingMax int) (int, int) {
 	pagesQuantity := 0
 	for _, process := range processes {
 		pagesQuantity += len(process.Pages)
 	}
 
+	// get proportional frames for each process in ram
 	ProportionalFrames(&ram, processes, pagesQuantity)
 
-	trashingCounter := 0
-	pageFaultsCounter := 0
-
-	//run lru
 	for pagesQuantity > 0 {
-		// get random process
-		index := 0
-		currentProcess := &utils.Process{Pages: make([]utils.Page, 0)}
-		for len(currentProcess.Pages) == 0 {
-			index = rand.Intn(len(processes))
+		// check if its trashing
+		if pagesQuantity%trashingCheckInterval == 0 {
+			for i := 0; i < len(processes); i++ {
+				if trashingCheckLast < len(processes[i].HistoryOfPageFaults) {
+					pageFaultsLately := utils.SumOfTrue(processes[i].HistoryOfPageFaults[len(processes[i].HistoryOfPageFaults)-trashingCheckLast:])
+					if pageFaultsLately > trashingMax {
+						processes[i].TrashedTimes++
+					}
+				}
+			}
+		}
+
+		// get random not frozen process
+		index := rand.Intn(len(processes))
+		currentProcess := &processes[index]
+		for currentProcess.IsFrozen {
+			index += 1
+			index = index % len(processes)
 			currentProcess = &processes[index]
 		}
 
 		currentPage := currentProcess.Pages[0]
-		isPageFault := page_replacement_algorithms.LRU(&ram, currentPage, currentProcess, trashingCheckInterval, &trashingCounter)
-		pagesQuantity--
+		currentProcess.AddPageToHistory(currentPage)
+
+		isPageFault := page_replacement_algorithms.LRU(&ram, currentPage, currentProcess)
 
 		if isPageFault {
-			pageFaultsCounter++
+			currentProcess.PageFaults++
 		}
 
+		currentProcess.RemovePage()
+		if len(currentProcess.Pages) == 0 {
+			currentProcess.IsFrozen = true
+		}
+
+		pagesQuantity--
 		//utils.DisplayRAM(ram, isPageFault, *currentProcess, currentPage)
+	}
+
+	pageFaultsCounter := 0
+	trashingCounter := 0
+	for _, process := range processes {
+		pageFaultsCounter += process.PageFaults
+		trashingCounter += process.TrashedTimes
 	}
 
 	return pageFaultsCounter, trashingCounter
